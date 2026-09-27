@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Selesaikan Persamaan! · PLSV</title>
+  <style>
+    /* CSS variables — light mode default */
+    :root {
+      --bg-page: #f4f7fc;
+      --bg-card: #ffffff;
+      --text-primary: #1e2b3c;
+      --text-secondary: #4b5f73;
+      --border-light: #d0ddee;
+      --accent-blue: #2a6f97;
+      --accent-blue-soft: #c7e0f0;
+      --accent-green: #2e7d5e;
+      --accent-green-soft: #c8e6d9;
+      --accent-red: #b23b3b;
+      --accent-red-soft: #f5d6d6;
+      --accent-orange: #bc6c25;
+      --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.02);
+      --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.04);
+      --dot-inactive: #b8c9dd;
+      --dot-active: #2a6f97;
+      --dot-correct: #2e7d5e;
+      --dot-wrong: #b23b3b;
+      --btn-disabled: #b8c9dd;
+    }
+
+    /* Dark mode override */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-page: #12181f;
+        --bg-card: #1e2832;
+        --text-primary: #e6edf5;
+        --text-secondary: #b0c2d6;
+        --border-light: #30404f;
+        --accent-blue: #6ba3c7;
+        --accent-blue-soft: #2e4a5e;
+        --accent-green: #5fa88a;
+        --accent-green-soft: #244c3b;
+        --accent-red: #d97a7a;
+        --accent-red-soft: #552e2e;
+        --accent-orange: #d18f4c;
+        --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.3);
+        --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.5);
+        --dot-inactive: #3a4a5a;
+        --dot-active: #6ba3c7;
+        --dot-correct: #5fa88a;
+        --dot-wrong: #d97a7a;
+        --btn-disabled: #3a4a5a;
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 16px;
+      transition: background 0.2s;
+    }
+
+    .game-container {
+      max-width: 800px;
+      width: 100%;
+      background: var(--bg-card);
+      border-radius: 24px;
+      padding: 24px 20px 28px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-light);
+    }
+
+    /* Header & skor */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .game-title {
+      font-size: 1.8rem;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
+    .score-badge {
+      background: var(--accent-blue-soft);
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--accent-blue);
+      border: 1px solid var(--border-light);
+      white-space: nowrap;
+    }
+
+    /* Tab level */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--border-light);
+      padding-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      background: transparent;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 30px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: background 0.1s, color 0.1s;
+      border: 1px solid transparent;
+      flex: 1 0 auto;
+      text-align: center;
+    }
+
+    .tab.active {
+      background: var(--accent-blue-soft);
+      color: var(--accent-blue);
+      border-color: var(--border-light);
+    }
+
+    .tab.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .tab:not(.locked):hover {
+      background: var(--border-light);
+    }
+
+    /* Indikator dot */
+    .dots-container {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--dot-inactive);
+      transition: background 0.15s;
+      border: 1px solid var(--border-light);
+    }
+
+    .dot.active {
+      background: var(--dot-active);
+      border-color: var(--accent-blue);
+      transform: scale(1.1);
+    }
+
+    .dot.correct {
+      background: var(--dot-correct);
+      border-color: var(--accent-green);
+    }
+
+    .dot.wrong {
+      background: var(--dot-wrong);
+      border-color: var(--accent-red);
+    }
+
+    /* Soal */
+    .question-box {
+      background: var(--bg-page);
+      padding: 28px 20px;
+      border-radius: 20px;
+      margin-bottom: 22px;
+      border: 1px solid var(--border-light);
+    }
+
+    .question-text {
+      font-size: 1.9rem;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: -0.01em;
+      word-break: break-word;
+    }
+
+    .question-label {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    /* Input & tombol */
+    .input-area {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .answer-input {
+      flex: 1;
+      min-width: 160px;
+      padding: 14px 18px;
+      font-size: 1.3rem;
+      border-radius: 16px;
+      border: 2px solid var(--border-light);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      outline: none;
+      transition: border 0.1s;
+      font-weight: 500;
+    }
+
+    .answer-input:focus {
+      border-color: var(--accent-blue);
+    }
+
+    .btn {
+      background: var(--accent-blue);
+      border: none;
+      border-radius: 40px;
+      padding: 14px 28px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: opacity 0.15s, background 0.1s;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .btn:disabled {
+      background: var(--btn-disabled);
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent-blue);
+      border: 2px solid var(--accent-blue);
+    }
+
+    .btn-secondary:disabled {
+      border-color: var(--btn-disabled);
+      color: var(--btn-disabled);
+      background: transparent;
+    }
+
+    .btn:hover:not(:disabled) {
+      opacity: 0.88;
+    }
+
+    /* Feedback */
+    .feedback {
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding: 8px 0;
+      min-height: 3rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .feedback.correct {
+      color: var(--accent-green);
+    }
+
+    .feedback.wrong {
+      color: var(--accent-red);
+    }
+
+    /* Hint */
+    .hint-box {
+      background: var(--accent-orange-soft, #f9e6d6);
+      border-left: 6px solid var(--accent-orange);
+      padding: 16px 18px;
+      border-radius: 12px;
+      margin: 12px 0 16px;
+      font-size: 1.05rem;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .hint-box strong {
+      color: var(--accent-orange);
+    }
+
+    /* Hasil level */
+    .result-card {
+      text-align: center;
+      padding: 20px 8px;
+    }
+
+    .result-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .result-stats {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      color: var(--text-secondary);
+    }
+
+    .result-message {
+      font-size: 1.2rem;
+      margin: 20px 0 28px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Sembunyikan */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+<div class="game-container" id="gameContainer">
+  <!-- Header + Skor -->
+  <div class="top-bar">
+    <div class="game-title">🧮 Selesaikan Persamaan!</div>
+    <div class="score-badge" id="scoreDisplay">Skor: 0</div>
+  </div>
+
+  <!-- Tab Level -->
+  <div class="tabs" id="tabsContainer">
+    <button class="tab active" data-level="1" id="tabLevel1">Mudah</button>
+    <button class="tab locked" data-level="2" id="tabLevel2">Sedang</button>
+    <button class="tab locked" data-level="3" id="tabLevel3">Sulit</button>
+  </div>
+
+  <!-- Konten utama (dinamis) -->
+  <div id="mainContent">
+    <!-- Dots -->
+    <div class="dots-container" id="dotsContainer"></div>
+
+    <!-- Soal -->
+    <div class="question-box">
+      <div class="question-label">Tentukan nilai x</div>
+      <div class="question-text" id="questionText">x + 5 = 12</div>
+    </div>
+
+    <!-- Input & aksi -->
+    <div class="input-area">
+      <div class="answer-row">
+        <input type="number" id="answerInput" class="answer-input" placeholder="x = ..." inputmode="numeric" step="1" autocomplete="off">
+        <button class="btn" id="submitBtn">Jawab</button>
+      </div>
+      <div class="feedback" id="feedbackMsg"></div>
+      <div id="hintContainer" class="hidden"></div>
+    </div>
+  </div>
+
+  <!-- Halaman hasil level (hidden default) -->
+  <div id="resultPage" class="result-card hidden">
+    <div class="result-title" id="resultTitle">Level Selesai!</div>
+    <div class="result-stats" id="resultStats"></div>
+    <div class="result-message" id="resultMessage"></div>
+    <div class="result-actions" id="resultActions"></div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // --------------------------------------------------------------
+    // Data soal per level (5 soal, jawaban bilangan bulat)
+    // --------------------------------------------------------------
+    const levelData = {
+      1: {
+        name: 'Mudah',
+        questions: [
+          { persamaan: 'x + 5 = 12', jawaban: 7, hint: 'Kurangi 5 dari kedua ruas: x + 5 - 5 = 12 - 5' },
+          { persamaan: '3x = 27', jawaban: 9, hint: 'Bagi kedua ruas dengan 3: 3x / 3 = 27 / 3' },
+          { persamaan: 'x - 8 = 3', jawaban: 11, hint: 'Tambahkan 8 ke kedua ruas: x - 8 + 8 = 3 + 8' },
+          { persamaan: '4x = 32', jawaban: 8, hint: 'Bagi kedua ruas dengan 4: 4x / 4 = 32 / 4' },
+          { persamaan: 'x + 9 = 15', jawaban: 6, hint: 'Kurangi 9 dari kedua ruas: x + 9 - 9 = 15 - 9' }
+        ]
+      },
+      2: {
+        name: 'Sedang',
+        questions: [
+          { persamaan: '2x + 3 = 11', jawaban: 4, hint: 'Kurangi 3 dulu: 2x + 3 - 3 = 11 - 3, lalu bagi 2.' },
+          { persamaan: '2(x + 4) = 18', jawaban: 5, hint: 'Bagi kedua ruas dengan 2: x + 4 = 9, lalu kurangi 4.' },
+          { persamaan: '3x - 5 = 10', jawaban: 5, hint: 'Tambahkan 5 ke kedua ruas: 3x = 15, lalu bagi 3.' },
+          { persamaan: '4x + 2 = 22', jawaban: 5, hint: 'Kurangi 2 dulu: 4x = 20, lalu bagi 4.' },
+          { persamaan: '3(x - 2) = 12', jawaban: 6, hint: 'Bagi kedua ruas dengan 3: x - 2 = 4, lalu tambahkan 2.' }
+        ]
+      },
+      3: {
+        name: 'Sulit',
+        questions: [
+          { persamaan: '3x + 4 = x + 12', jawaban: 4, hint: 'Kurangi x dari kedua ruas: 2x + 4 = 12. Lalu kurangi 4 dan bagi 2.' },
+          { persamaan: '4(x - 2) = 2x + 6', jawaban: 7, hint: 'Uraikan: 4x - 8 = 2x + 6. Kumpulkan suku x di kiri: 2x - 8 = 6.' },
+          { persamaan: '2x + 5 = 5x - 7', jawaban: 4, hint: 'Pindahkan 2x ke kanan: 5 = 3x - 7. Lalu tambah 7 dan bagi 3.' },
+          { persamaan: '3(2x - 1) = 4x + 7', jawaban: 5, hint: 'Uraikan: 6x - 3 = 4x + 7. Kurangi 4x: 2x - 3 = 7.' },
+          { persamaan: '5x - 3 = 2x + 9', jawaban: 4, hint: 'Kurangi 2x: 3x - 3 = 9. Tambah 3, lalu bagi 3.' }
+        ]
+      }
+    };
+
+    // --------------------------------------------------------------
+    // State game
+    // --------------------------------------------------------------
+    let currentLevel = 1;                 // level yang sedang aktif
+    let currentQuestionIndex = 0;         // 0-4
+    let totalScore = 0;
+
+    // unlocked: level yang terbuka (1 selalu terbuka)
+    let unlockedLevels = { 1: true, 2: false, 3: false };
+
+    // status tiap soal per level: array of 'correct' | 'wrong' | 'active' | 'inactive'
+    // Kita simpan sebagai objek: questionStatus[level][index] = 'correct' / 'wrong' / 'active' / 'inactive'
+    let questionStatus = {
+      1: ['active', 'inactive', 'inactive', 'inactive', 'inactive'],
+      2: ['inactive', 'inactive', 'inactive', 'inactive', 'inactive'],
+      3: ['inactive', 'inactive', 'inactive', 'inactive', 'inactive']
+    };
+
+    // Untuk melacak berapa kali percobaan pada soal saat ini (0 = belum, 1 = sudah salah, dst)
+    let attemptCount = 0;
+    // Apakah petunjuk sudah ditampilkan untuk soal ini?
+    let hintShown = false;
+    // Apakah soal saat ini sudah dijawab benar?
+    let questionAnswered = false;
+
+    // Elemen DOM
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const tabs = document.querySelectorAll('.tab');
+    const dotsContainer = document.getElementById('dotsContainer');
+    const questionText = document.getElementById('questionText');
+    const answerInput = document.getElementById('answerInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const feedbackMsg = document.getElementById('feedbackMsg');
+    const hintContainer = document.getElementById('hintContainer');
+    const mainContent = document.getElementById('mainContent');
+    const resultPage = document.getElementById('resultPage');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultStats = document.getElementById('resultStats');
+    const resultMessage = document.getElementById('resultMessage');
+    const resultActions = document.getElementById('resultActions');
+
+    // --------------------------------------------------------------
+    // Fungsi bantu
+    // --------------------------------------------------------------
+    function updateScoreDisplay() {
+      scoreDisplay.textContent = `Skor: ${totalScore}`;
+    }
+
+    // Dapatkan soal aktif
+    function getCurrentQuestion() {
+      return levelData[currentLevel].questions[currentQuestionIndex];
+    }
+
+    // Render dots untuk level saat ini
+    function renderDots() {
+      const statuses = questionStatus[currentLevel];
+      dotsContainer.innerHTML = '';
+      statuses.forEach((status, idx) => {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        if (status === 'correct') dot.classList.add('correct');
+        else if (status === 'wrong') dot.classList.add('wrong');
+        else if (status === 'active') dot.classList.add('active');
+        // 'inactive' → default abu-abu
+        dotsContainer.appendChild(dot);
+      });
+    }
+
+    // Simpan jawaban salah, tandai dot merah (jika belum correct)
+    function markCurrentWrong() {
+      const statuses = questionStatus[currentLevel];
+      // Jangan overwrite jika sudah correct (tapi secara logika tidak akan terjadi)
+      if (statuses[currentQuestionIndex] !== 'correct') {
+        statuses[currentQuestionIndex] = 'wrong';
+      }
+      renderDots();
+    }
+
+    // Tandai soal saat ini benar
+    function markCurrentCorrect() {
+      questionStatus[currentLevel][currentQuestionIndex] = 'correct';
+      // jika masih ada soal berikutnya, set soal berikutnya menjadi 'active' (kecuali sudah correct/wrong)
+      const statuses = questionStatus[currentLevel];
+      if (currentQuestionIndex + 1 < statuses.length && statuses[currentQuestionIndex + 1] !== 'correct' && statuses[currentQuestionIndex + 1] !== 'wrong') {
+        statuses[currentQuestionIndex + 1] = 'active';
+      }
+      renderDots();
+    }
+
+    // Perbarui tampilan soal saat ini
+    function loadQuestion() {
+      const q = getCurrentQuestion();
+      questionText.textContent = q.persamaan;
+      answerInput.value = '';
+      answerInput.disabled = false;
+      submitBtn.disabled = false;
+      feedbackMsg.textContent = '';
+      feedbackMsg.className = 'feedback';
+      hintContainer.classList.add('hidden');
+      hintContainer.innerHTML = '';
+      attemptCount = 0;
+      hintShown = false;
+      questionAnswered = false;
+
+      // pastikan dot untuk soal ini 'active' jika statusnya bukan correct/wrong
+      const statuses = questionStatus[currentLevel];
+      if (statuses[currentQuestionIndex] !== 'correct' && statuses[currentQuestionIndex] !== 'wrong') {
+        statuses[currentQuestionIndex] = 'active';
+      }
+      renderDots();
+
+      // fokus ke input
+      answerInput.focus();
+    }
+
+    // Tampilkan petunjuk
+    function showHint() {
+      const q = getCurrentQuestion();
+      hintContainer.innerHTML = `<div class="hint-box"><strong>💡 Petunjuk:</strong> ${q.hint}</div>`;
+      hintContainer.classList.remove('hidden');
+      hintShown = true;
+    }
+
+    // Cek jawaban
+    function handleSubmit() {
+      if (questionAnswered) return; // sudah benar, tombol mungkin disabled
+
+      const rawValue = answerInput.value.trim();
+      if (rawValue === '') {
+        feedbackMsg.textContent = '✏️ Masukkan jawaban terlebih dahulu.';
+        feedbackMsg.className = 'feedback wrong';
+        return;
+      }
+
+      const userAnswer = Number(rawValue);
+      if (!Number.isInteger(userAnswer)) {
+        feedbackMsg.textContent = '🔢 Masukkan bilangan bulat.';
+        feedbackMsg.className = 'feedback wrong';
+        return;
+      }
+
+      const q = getCurrentQuestion();
+      const isCorrect = (userAnswer === q.jawaban);
+
+      if (isCorrect) {
+        // Tentukan poin: jika attemptCount === 0 dan hintShown === false => +10
+        // jika hintShown === true atau attemptCount >= 1 => +5
+        let poin = 0;
+        if (attemptCount === 0 && !hintShown) {
+          poin = 10;
+        } else {
+          poin = 5;
+        }
+        totalScore += poin;
+        updateScoreDisplay();
+
+        // Tandai benar
+        markCurrentCorrect();
+        questionAnswered = true;
+        answerInput.disabled = true;
+        submitBtn.disabled = true;
+
+        feedbackMsg.textContent = '✅ Benar! +' + poin + ' poin';
+        feedbackMsg.className = 'feedback correct';
+
+        // Sembunyikan hint (jika ada)
+        hintContainer.classList.add('hidden');
+
+        // Cek apakah masih ada soal berikutnya di level ini
+        const statuses = questionStatus[currentLevel];
+        const allAnswered = statuses.every(s => s === 'correct' || s === 'wrong');
+        // Tapi kita juga harus memeriksa apakah sudah 5 soal? Kita ingin lanjut ke soal berikutnya
+        if (currentQuestionIndex + 1 < levelData[currentLevel].questions.length) {
+          // Jika soal berikutnya belum correct/wrong, lanjut ke soal berikutnya setelah jeda singkat
+          setTimeout(() => {
+            if (currentQuestionIndex + 1 < levelData[currentLevel].questions.length) {
+              currentQuestionIndex++;
+              loadQuestion();
+            }
+          }, 800);
+        } else {
+          // Sudah soal terakhir, tampilkan hasil level setelah jeda
+          setTimeout(() => {
+            showLevelResult();
+          }, 800);
+        }
+      } else {
+        // Jawaban salah
+        feedbackMsg.textContent = '❌ Belum tepat, coba lagi';
+        feedbackMsg.className = 'feedback wrong';
+
+        // Tandai dot merah (jika bukan correct)
+        markCurrentWrong();
+
+        // Naikkan attemptCount
+        attemptCount++;
+
+        // Jika baru salah pertama kali, tampilkan petunjuk
+        if (attemptCount === 1 && !hintShown) {
+          showHint();
+        }
+
+        // Kosongkan input? biarkan saja, tapi beri kesempatan
+        // answerInput.select(); // opsional
+      }
+    }
+
+    // Tampilkan halaman hasil untuk level saat ini
+    function showLevelResult() {
+      // Hitung jumlah benar di level ini
+      const statuses = questionStatus[currentLevel];
+      const correctCount = statuses.filter(s => s === 'correct').length;
+      const totalQuestions = statuses.length;
+      const percentage = (correctCount / totalQuestions) * 100;
+      const lulus = percentage >= 60;
+
+      // Sembunyikan main content, tampilkan result
+      mainContent.classList.add('hidden');
+      resultPage.classList.remove('hidden');
+
+      // Update tampilan result
+      resultTitle.textContent = `Level ${levelData[currentLevel].name}`;
+      resultStats.textContent = `Benar ${correctCount} dari ${totalQuestions} soal (${Math.round(percentage)}%)`;
+
+      // Pesan motivasi
+      if (lulus) {
+        resultMessage.textContent = correctCount === totalQuestions
+          ? '🌟 Luar biasa! Semua jawaban benar. Kamu siap ke level berikutnya!'
+          : '🎉 Kerja bagus! Kamu lulus level ini. Teruskan ke tantangan berikutnya!';
+      } else {
+        resultMessage.textContent = '💪 Jangan menyerah! Coba lagi level ini untuk memperbaiki skor.';
+      }
+
+      // Tombol aksi
+      resultActions.innerHTML = '';
+
+      // Tombol ulangi level
+      const ulangBtn = document.createElement('button');
+      ulangBtn.className = 'btn btn-secondary';
+      ulangBtn.textContent = 'Ulangi Level';
+      ulangBtn.addEventListener('click', () => {
+        resetLevel(currentLevel);
+      });
+      resultActions.appendChild(ulangBtn);
+
+      // Tombol lanjut ke level berikutnya jika lulus dan ada level berikutnya
+      if (lulus && currentLevel < 3) {
+        const nextLevel = currentLevel + 1;
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'btn';
+        nextBtn.textContent = `Lanjut ke Level ${levelData[nextLevel].name}`;
+        nextBtn.addEventListener('click', () => {
+          // Buka level berikutnya
+          unlockedLevels[nextLevel] = true;
+          // Reset status level berikutnya ke inactive (kecuali index 0 active)
+          questionStatus[nextLevel] = ['active', 'inactive', 'inactive', 'inactive', 'inactive'];
+          // Pindah ke level berikutnya
+          switchToLevel(nextLevel);
+        });
+        resultActions.appendChild(nextBtn);
+      } else if (lulus && currentLevel === 3) {
+        // Level 3 selesai semua
+        const finishBtn = document.createElement('button');
+        finishBtn.className = 'btn';
+        finishBtn.textContent = 'Selesai 🎓';
+        finishBtn.addEventListener('click', () => {
+          alert('Selamat! Kamu telah menyelesaikan semua level. Hebat!');
+          // Reset total ke awal? Kembali ke level 1
+          resetAllGame();
+        });
+        resultActions.appendChild(finishBtn);
+      }
+    }
+
+    // Reset level tertentu (soal, skor tidak direset global, hanya status level)
+    function resetLevel(level) {
+      // Kembalikan status soal level ke inactive, kecuali index 0 active
+      questionStatus[level] = ['active', 'inactive', 'inactive', 'inactive', 'inactive'];
+      if (currentLevel === level) {
+        currentQuestionIndex = 0;
+        // Tampilkan main content, sembunyikan result
+        resultPage.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+        // pastikan tab sesuai
+        updateTabsUI();
+        renderDots();
+        loadQuestion();
+        // Skor total tidak direset, hanya level status
+      } else {
+        // jika reset level lain (tidak mungkin dari UI), fallback
+        switchToLevel(level);
+      }
+    }
+
+    // Ganti level
+    function switchToLevel(level) {
+      if (!unlockedLevels[level] && level !== 1) return; // keamanan
+
+      currentLevel = level;
+      // Reset index soal ke 0, tapi kita harus pastikan status soal sudah siap
+      // Jika status level ini masih default (misal belum pernah diinisialisasi), set active index 0
+      if (!questionStatus[level] || questionStatus[level].every(s => s === 'inactive')) {
+        questionStatus[level] = ['active', 'inactive', 'inactive', 'inactive', 'inactive'];
+      } else {
+        // jika sudah ada status, pastikan setidaknya index 0 active jika belum ada yang active/correct/wrong
+        const hasProgress = questionStatus[level].some(s => s === 'active' || s === 'correct' || s === 'wrong');
+        if (!hasProgress) {
+          questionStatus[level][0] = 'active';
+        }
+      }
+
+      // Cari soal pertama yang belum correct/wrong? Tapi kita langsung mulai dari index 0? 
+      // Lebih baik mulai dari index 0 jika level baru, atau index pertama yang belum selesai.
+      // Supaya mudah, kita mulai dari index 0. Tapi jika index 0 sudah correct, kita bisa cari berikutnya.
+      // Sederhananya: cari index pertama yang statusnya bukan correct/wrong. Jika tidak ada, mulai dari 0.
+      let startIdx = questionStatus[level].findIndex(s => s !== 'correct' && s !== 'wrong');
+      if (startIdx === -1) startIdx = 0; // semua sudah benar/salah, mulai dari awal? reset? biarkan
+
+      currentQuestionIndex = startIdx;
+
+      // Sembunyikan result, tampilkan main
+      resultPage.classList.add('hidden');
+      mainContent.classList.remove('hidden');
+
+      updateTabsUI();
+      renderDots();
+      loadQuestion();
+    }
+
+    // Reset seluruh game
+    function resetAllGame() {
+      totalScore = 0;
+      updateScoreDisplay();
+      unlockedLevels = { 1: true, 2: false, 3: false };
+      questionStatus = {
+        1: ['active', 'inactive', 'inactive', 'inactive', 'inactive'],
+        2: ['inactive', 'inactive', 'inactive', 'inactive', 'inactive'],
+        3: ['inactive', 'inactive', 'inactive', 'inactive', 'inactive']
+      };
+      currentLevel = 1;
+      currentQuestionIndex = 0;
+      updateTabsUI();
+      resultPage.classList.add('hidden');
+      mainContent.classList.remove('hidden');
+      renderDots();
+      loadQuestion();
+    }
+
+    // Perbarui tampilan tab (locked/active)
+    function updateTabsUI() {
+      tabs.forEach(tab => {
+        const lvl = parseInt(tab.dataset.level);
+        tab.classList.remove('active', 'locked');
+        if (lvl === currentLevel) {
+          tab.classList.add('active');
+        }
+        if (!unlockedLevels[lvl]) {
+          tab.classList.add('locked');
+        }
+      });
+    }
+
+    // Inisialisasi awal
+    function initGame() {
+      updateScoreDisplay();
+      updateTabsUI();
+      renderDots();
+      loadQuestion();
+
+      // Event listener tombol jawab
+      submitBtn.addEventListener('click', handleSubmit);
+      answerInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleSubmit();
+        }
+      });
+
+      // Event listener tab
+      tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          const lvl = parseInt(tab.dataset.level);
+          if (!unlockedLevels[lvl]) return;
+          if (lvl === currentLevel) return;
+          switchToLevel(lvl);
+        });
+      });
+    }
+
+    // Jalankan
+    initGame();
+  })();
+</script>
+</body>
+</html>
